@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boutique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link id="googleFontLink" rel="stylesheet" href="">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" data-cfg-logo>BLANC</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-text">
+    <h1 data-cfg-tagline>La mode<br>sans bruit</h1>
+    <p data-cfg-description>Des pièces intemporelles pensées pour durer.</p>
+    <a class="hero-cta" onclick="document.getElementById('catalogue').scrollIntoView({behavior:'smooth'})">Voir la collection</a>
+  </div>
+  <div class="hero-image">
+    <img data-cfg-hero-image src="" alt="Nouvelle collection">
+  </div>
+</div>
+
+<!-- CATALOGUE -->
+<div id="catalogue">
+  <div class="section-header">
+    <h2>Collection</h2>
+    <span id="productCount"></span>
+  </div>
+  <div class="catalogue">
+    <div class="product-grid" id="productGrid"><div class="loading-grid">Chargement des produits...</div></div>
+    <div class="product-detail" id="productDetail"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-col">
+    <h5 data-cfg-footer-name>BLANC</h5>
+    <p data-cfg-footer-desc>Mode minimaliste.</p>
+  </div>
+  <div class="footer-col">
+    <h5>Informations</h5>
+    <div data-cfg-footer-links></div>
+  </div>
+  <div class="footer-col">
+    <h5>Contact</h5>
+    <p data-cfg-contact-email>contact@boutique.com</p>
+    <p data-cfg-contact-hours>Lun–Ven, 9h–18h</p>
+  </div>
+</footer>
+<div class="footer-bottom">
+  <span>© <span data-cfg-year>2026</span> <span data-cfg-logo>BLANC</span>. Tous droits réservés.</span>
+  <span data-cfg-footer-note>Paiement à la livraison</span>
+</div>
+
+<!-- 1. Config du client (le seul fichier à changer) -->
+<script src="config.js"></script>
+
+<!-- 2. Charge la police Google Fonts définie dans config.js -->
+<script>
+  document.getElementById('googleFontLink').href = window.SITE_CONFIG.fonts.googleFontsUrl;
+</script>
+
+<!-- 3. Logique du site (ne pas modifier) -->
+<script type="module" src="js/site.js"></script>
+
+</body>
+</html>

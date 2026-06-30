@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link id="googleFontLink" rel="stylesheet" href="">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1 data-cfg-logo>BLANC</h1>
+    <p>Espace administration</p>
+    <label>Adresse e-mail</label>
+    <input type="email" id="emailInput" placeholder="admin@exemple.com" autocomplete="username">
+    <label>Mot de passe</label>
+    <input type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
+    <button class="login-btn" id="loginBtn" onclick="login()">Se connecter</button>
+    <div class="login-loading" id="loginLoading">Connexion en cours...</div>
+    <div class="login-error" id="loginError">Email ou mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="admin-screen" id="adminScreen">
+  <header>
+    <div class="header-logo"><span data-cfg-logo>BLANC</span> — Admin</div>
+    <div class="header-right">
+      <div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">Connexion...</span></div>
+      <span class="header-email" id="headerEmail"></span>
+      <a href="index.html" target="_blank">Voir le site →</a>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+    <div class="form-card">
+      <h2>Ajouter un produit</h2>
+
+      <div class="form-group">
+        <span class="photos-label">Photos du produit (max 6)</span>
+        <div class="photos-hint">La 1ère photo sera l'image principale</div>
+        <div class="photos-grid" id="photosGrid"></div>
+        <div class="upload-progress-wrap" id="progressWrap"><div class="upload-progress-bar" id="progressBar"></div></div>
+        <div class="upload-status" id="uploadStatus">Envoi des photos...</div>
+      </div>
+
+      <div class="form-group">
+        <label>Nom du produit *</label>
+        <input type="text" id="prodName" placeholder="Ex : Robe Été Fleurie">
+      </div>
+      <div class="form-group">
+        <label>Description courte *</label>
+        <textarea id="prodDesc" placeholder="Ex : 100% coton, coupe fluide"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prix *</label>
+          <input type="number" id="prodPrice" placeholder="5500">
+        </div>
+        <div class="form-group">
+          <label>Ancien prix</label>
+          <input type="number" id="prodOldPrice" placeholder="Optionnel">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Catégorie *</label>
+        <select id="prodCategory">
+          <option value="femme">Femme</option>
+          <option value="homme">Homme</option>
+          <option value="accessoires">Accessoires</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tailles disponibles</label>
+        <input type="text" id="prodSizes" placeholder="XS, S, M, L, XL">
+        <div class="form-hint">Séparez par des virgules</div>
+      </div>
+      <div class="form-group">
+        <label>Couleurs disponibles</label>
+        <input type="text" id="prodColors" placeholder="Blanc, Noir, Beige">
+        <div class="form-hint">Séparez par des virgules</div>
+      </div>
+      <div class="form-group">
+        <label>Badge</label>
+        <div class="badge-options">
+          <button class="badge-opt selected" onclick="selectBadge(this,null)">Aucun</button>
+          <button class="badge-opt" onclick="selectBadge(this,'Nouveau')">Nouveau</button>
+          <button class="badge-opt" onclick="selectBadge(this,'Soldes')">Soldes</button>
+          <button class="badge-opt" onclick="selectBadge(this,'Exclusif')">Exclusif</button>
+        </div>
+      </div>
+
+      <button class="add-btn" id="addBtn" onclick="addProduct()">Ajouter le produit</button>
+      <div class="success-banner" id="successBanner">✓ Produit ajouté — visible sur le site instantanément !</div>
+    </div>
+
+    <div class="products-card">
+      <h2>Produits <span id="productCountLabel">...</span></h2>
+      <div id="productList"><div class="loading-state">Chargement...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 1. Config du client (le seul fichier à changer) -->
+<script src="config.js"></script>
+
+<!-- 2. Charge la police Google Fonts définie dans config.js -->
+<script>
+  document.getElementById('googleFontLink').href = window.SITE_CONFIG.fonts.googleFontsUrl;
+</script>
+
+<!-- 3. Logique admin (ne pas modifier) -->
+<script type="module" src="js/admin.js"></script>
+
+</body>
+</html>
