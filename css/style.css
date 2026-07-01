@@ -52,7 +52,7 @@ nav { position: sticky; top: 0; z-index: 100; background: var(--white); border-b
 .product-info { padding: 14px 0 8px; }
 .product-name { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
 .product-desc { font-size: 13px; color: var(--gray-600); margin-bottom: 8px; }
-.product-price { font-family: var(--font-display); font-size: 18px; }
+.product-price { color: var(--black-400); font-size: 15px; font-weight: 700; }
 .product-price .old { color: var(--gray-400); text-decoration: line-through; margin-right: 8px; font-size: 15px; }
 
 /* PRODUCT DETAIL */
