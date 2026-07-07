@@ -14,6 +14,10 @@ import {
 
 const CFG = window.SITE_CONFIG;
 const MAX_PHOTOS = 6;
+const BADGE_CLASSES = { 'Nouveau': 'badge-nouveau', 'Soldes': 'badge-soldes', 'Exclusif': 'badge-exclusif' };
+function badgeClass(badge) {
+  return BADGE_CLASSES[badge] || '';
+}
 
 const app  = initializeApp(CFG.firebase);
 const auth = getAuth(app);
@@ -372,7 +376,7 @@ function renderList(products) {
     <div class="product-item">
       <div class="product-thumbs-row">${thumbsHTML}</div>
       <div class="product-meta">
-        <strong>${p.name}${p.badge?`<span class="product-badge-pill">${p.badge}</span>`:''}</strong>
+        <strong>${p.name}${p.badge?`<span class="product-badge-pill ${badgeClass(p.badge)}">${p.badge}</span>`:''}</strong>
         <div class="meta-price">${p.price.toLocaleString(CFG.currencyLocale)} ${CFG.currency}${p.oldPrice?` · <s>${p.oldPrice.toLocaleString(CFG.currencyLocale)} ${CFG.currency}</s>`:''} <span class="category-pill">${categoryLabel}</span></div>
         <div class="meta-details">${p.sizes.join(', ')}${p.colors&&p.colors.length?' · '+p.colors.join(', '):''} · ${imgs.length} photo${imgs.length>1?'s':''}</div>
       </div>

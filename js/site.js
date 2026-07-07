@@ -28,6 +28,11 @@ function getImages(p) {
   return imgs;
 }
 
+const BADGE_CLASSES = { 'Nouveau': 'badge-nouveau', 'Soldes': 'badge-soldes', 'Exclusif': 'badge-exclusif' };
+function badgeClass(badge) {
+  return BADGE_CLASSES[badge] || '';
+}
+
 // ── INJECT TEXTS FROM CONFIG ──
 function injectStaticContent() {
   document.title = CFG.shopName + " — Boutique";
@@ -143,7 +148,12 @@ function renderGrid() {
     products.length + ' pièce' + (products.length !== 1 ? 's' : '');
 
   if (products.length === 0) {
-    grid.innerHTML = `<div class="empty-catalogue"><h3>Aucun produit</h3><p>Revenez bientôt !</p></div>`;
+    grid.innerHTML = `<div class="empty-catalogue">
+      <svg class="empty-catalogue-icon" viewBox="0 0 48 48" fill="none">
+        <path d="M14 16h20l2 26H12l2-26z"/>
+        <path d="M18 16v-3a6 6 0 0 1 12 0v3"/>
+      </svg>
+      <h3>Aucun produit</h3><p>Revenez bientôt !</p></div>`;
     return;
   }
 
@@ -153,7 +163,7 @@ function renderGrid() {
     return `
     <div class="product-card" id="card-${p.id}" onclick="openDetail('${p.id}')">
       <div class="product-img">
-        ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
+        ${p.badge ? `<span class="product-badge ${badgeClass(p.badge)}">${p.badge}</span>` : ''}
         ${thumb ? `<img src="${thumb}" alt="${p.name}">` : `<span>${p.name.split(' ').slice(0,2).join(' ')}</span>`}
       </div>
       <div class="product-info">
@@ -248,6 +258,10 @@ window.openDetail = function(id) {
         </div>
         <button class="submit-btn" id="submitBtn-${id}" onclick="submitOrder('${id}')">${F.submitPrefix}${formatPrice(p.price)}${F.submitSuffix}</button>
         <div class="success-msg" id="success-${id}">
+          <svg class="success-icon" viewBox="0 0 52 52">
+            <circle class="success-icon-circle" cx="26" cy="26" r="24" fill="none"/>
+            <path class="success-icon-check" fill="none" d="M14 27l7 7 16-16"/>
+          </svg>
           <h5>${F.successTitle}</h5>
           <p>${F.successText}</p>
         </div>
@@ -321,8 +335,18 @@ window.submitOrder = async function(id) {
   }
 };
 
+// ── OMBRE NAV AU SCROLL ──
+function initNavShadow() {
+  const nav = document.querySelector('nav');
+  if (!nav) return;
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 10);
+  });
+}
+
 // ── INIT ──
 injectStaticContent();
 injectAnalytics();
 renderCategoryFilters();
+initNavShadow();
 startListening();
