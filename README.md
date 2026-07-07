@@ -71,6 +71,8 @@ Ouvrez `config.js` et modifiez uniquement les valeurs (jamais les noms de clés)
 | `ordersScriptUrl` | URL Apps Script du **nouveau** Google Sheet |
 | `deliveryZones` | Liste des wilayas/régions (adapter si hors Algérie) |
 | `colors` | Modifier seulement si le client veut une autre palette |
+| `categories` | Liste des catégories de produits (valeur + libellé) — alimente le filtre du site et le menu déroulant admin |
+| `analytics` | ID Meta Pixel et/ou Google Analytics du client (laisser vide `""` si absent) |
 
 ### 4. Déployer sur Netlify
 

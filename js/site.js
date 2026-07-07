@@ -15,6 +15,7 @@ const db = getFirestore(app);
 let allProducts = [];
 let quantities = {};
 let selectedSizes = {};
+let activeCategory = 'all';
 
 function formatPrice(p) {
   return p.toLocaleString(CFG.currencyLocale) + ' ' + CFG.currency;
@@ -47,6 +48,74 @@ function injectStaticContent() {
   }
 }
 
+// ── FILTRE PAR CATÉGORIE ──
+function renderCategoryFilters() {
+  const wrap = document.getElementById('categoryFilters');
+  if (!wrap) return;
+  const cats = [{ value: 'all', label: 'Tous' }, ...CFG.categories];
+  wrap.innerHTML = cats.map(c =>
+    `<button class="filter-btn${activeCategory === c.value ? ' active' : ''}" data-category="${c.value}">${c.label}</button>`
+  ).join('');
+  wrap.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.category;
+      renderCategoryFilters();
+      renderGrid();
+    });
+  });
+}
+
+// ── ANALYTICS (Meta Pixel / Google Analytics) ──
+function injectAnalytics() {
+  const a = CFG.analytics;
+  if (!a) return;
+
+  if (a.googleAnalyticsId) {
+    const loader = document.createElement('script');
+    loader.async = true;
+    loader.src = `https://www.googletagmanager.com/gtag/js?id=${a.googleAnalyticsId}`;
+    document.head.appendChild(loader);
+
+    const init = document.createElement('script');
+    init.textContent = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${a.googleAnalyticsId}');
+    `;
+    document.head.appendChild(init);
+  }
+
+  if (a.metaPixelId) {
+    const pixel = document.createElement('script');
+    pixel.textContent = `
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+      document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '${a.metaPixelId}');
+      fbq('track', 'PageView');
+    `;
+    document.head.appendChild(pixel);
+
+    const noscript = document.createElement('noscript');
+    noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${a.metaPixelId}&ev=PageView&noscript=1" alt="">`;
+    document.body.appendChild(noscript);
+  }
+}
+
+function trackOrderConversion(value) {
+  const a = CFG.analytics;
+  if (!a) return;
+  if (a.metaPixelId && window.fbq) {
+    window.fbq('track', 'Lead', { value, currency: CFG.currency });
+  }
+  if (a.googleAnalyticsId && window.gtag) {
+    window.gtag('event', 'generate_lead', { value, currency: CFG.currency });
+  }
+}
+
 // ── ÉCOUTE TEMPS RÉEL FIREBASE ──
 function startListening() {
   const q = query(collection(db, "produits"), orderBy("createdAt", "desc"));
@@ -61,15 +130,20 @@ function renderGrid() {
   const detail = document.getElementById('productDetail');
   detail.classList.remove('open');
   detail.innerHTML = '';
-  document.getElementById('productCount').textContent =
-    allProducts.length + ' pièce' + (allProducts.length !== 1 ? 's' : '');
 
-  if (allProducts.length === 0) {
+  const products = activeCategory === 'all'
+    ? allProducts
+    : allProducts.filter(p => p.category === activeCategory);
+
+  document.getElementById('productCount').textContent =
+    products.length + ' pièce' + (products.length !== 1 ? 's' : '');
+
+  if (products.length === 0) {
     grid.innerHTML = `<div class="empty-catalogue"><h3>Aucun produit</h3><p>Revenez bientôt !</p></div>`;
     return;
   }
 
-  grid.innerHTML = allProducts.map(p => {
+  grid.innerHTML = products.map(p => {
     const imgs = getImages(p);
     const thumb = imgs[0] || null;
     return `
@@ -235,6 +309,7 @@ window.submitOrder = async function(id) {
     await fetch(CFG.ordersScriptUrl, { method: 'POST', body: JSON.stringify(data) });
     document.getElementById('success-' + id).classList.add('show');
     btn.textContent = 'Commande envoyée ✓';
+    trackOrderConversion(p.price * data.quantite);
   } catch(err) {
     btn.textContent = 'Réessayer';
     btn.disabled = false;
@@ -244,4 +319,6 @@ window.submitOrder = async function(id) {
 
 // ── INIT ──
 injectStaticContent();
+injectAnalytics();
+renderCategoryFilters();
 startListening();

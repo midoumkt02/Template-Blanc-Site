@@ -27,6 +27,10 @@ let unsubscribeProducts = null;
 function injectStaticContent() {
   document.title = CFG.shopName + " — Admin";
   document.querySelectorAll('[data-cfg-logo]').forEach(el => el.textContent = CFG.shopName);
+  const categorySelect = document.getElementById('prodCategory');
+  if (categorySelect) {
+    categorySelect.innerHTML = CFG.categories.map(c => `<option value="${c.value}">${c.label}</option>`).join('');
+  }
 }
 
 // ── AUTH STATE ──
@@ -245,6 +249,7 @@ function renderList(products) {
   }
   list.innerHTML = products.map(p => {
     const imgs = [p.image, ...(p.images||[])].filter(Boolean);
+    const categoryLabel = CFG.categories.find(c => c.value === p.category)?.label || p.category;
     const thumbsHTML = imgs.length === 0
       ? `<div class="product-thumb-placeholder">Pas de photo</div>`
       : imgs.slice(0,3).map(url => `<div class="product-thumb"><img src="${url}" alt=""></div>`).join('') +
@@ -254,7 +259,7 @@ function renderList(products) {
       <div class="product-thumbs-row">${thumbsHTML}</div>
       <div class="product-meta">
         <strong>${p.name}${p.badge?`<span class="product-badge-pill">${p.badge}</span>`:''}</strong>
-        <div class="meta-price">${p.price.toLocaleString(CFG.currencyLocale)} ${CFG.currency}${p.oldPrice?` · <s>${p.oldPrice.toLocaleString(CFG.currencyLocale)} ${CFG.currency}</s>`:''} · ${p.category}</div>
+        <div class="meta-price">${p.price.toLocaleString(CFG.currencyLocale)} ${CFG.currency}${p.oldPrice?` · <s>${p.oldPrice.toLocaleString(CFG.currencyLocale)} ${CFG.currency}</s>`:''} · ${categoryLabel}</div>
         <div class="meta-details">${p.sizes.join(', ')}${p.colors&&p.colors.length?' · '+p.colors.join(', '):''} · ${imgs.length} photo${imgs.length>1?'s':''}</div>
       </div>
       <button class="delete-btn" onclick="deleteProduct('${p.id}')">Supprimer</button>

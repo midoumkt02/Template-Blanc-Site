@@ -9,11 +9,11 @@
 const SITE_CONFIG = {
 
   // ── IDENTITÉ DE LA BOUTIQUE ──
-  shopName: "BLANC",
+  shopName: "Hijabi Mode",
   shopTagline: "La mode sans bruit",
   shopDescription: "Des pièces intemporelles pensées pour durer. Matières nobles, coupes épurées, fabrication responsable.",
   shopFooterText: "Mode minimaliste, fabriquée avec des matières sélectionnées.",
-  contactEmail: "contact@blanc-mode.com",
+  contactEmail: "contact@Hijabi-mode.com",
   contactHours: "Lun–Ven, 9h–18h",
   footerNote: "Paiement à la livraison · Livraison partout en Algérie",
 
@@ -94,7 +94,20 @@ const SITE_CONFIG = {
     { label: "Guide des tailles", url: "#" },
     { label: "Livraison & retours", url: "#" },
     { label: "Entretien des pièces", url: "#" }
-  ]
+  ],
+
+  // ── CATÉGORIES DE PRODUITS (utilisées dans le formulaire admin et le filtre du site) ──
+  categories: [
+    { value: "femme", label: "Femme" },
+    { value: "homme", label: "Homme" },
+    { value: "accessoires", label: "Accessoires" }
+  ],
+
+  // ── ANALYTICS (laisser vide "" si le client n'a pas de compte) ──
+  analytics: {
+    googleAnalyticsId: "", // ex: "G-XXXXXXXXXX"
+    metaPixelId: ""        // ex: "1234567890123456"
+  }
 };
 
 // Ne pas modifier — rend la config accessible aux autres fichiers
