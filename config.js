@@ -17,6 +17,9 @@ const SITE_CONFIG = {
   contactHours: "Lun–Ven, 9h–18h",
   footerNote: "Paiement à la livraison · Livraison partout en Algérie",
 
+  // ── LOGO (laisser vide "" si le client n'en a pas encore — le nom textuel suffit) ──
+  logoImage: "",
+
   // ── IMAGE HERO (bannière d'accueil) ──
   heroImage: "https://res.cloudinary.com/djikeohkg/image/upload/v1782746468/ddbe6d64623ccc6cb5e2c147a420a6dc_hc7rld.jpg",
 

@@ -32,6 +32,10 @@ function getImages(p) {
 function injectStaticContent() {
   document.title = CFG.shopName + " — Boutique";
   document.querySelectorAll('[data-cfg-logo]').forEach(el => el.textContent = CFG.shopName);
+  document.querySelectorAll('[data-cfg-logo-image]').forEach(el => {
+    if (CFG.logoImage) { el.src = CFG.logoImage; el.style.display = 'block'; }
+    else { el.style.display = 'none'; }
+  });
   document.querySelectorAll('[data-cfg-tagline]').forEach(el => el.innerHTML = CFG.shopTagline);
   document.querySelectorAll('[data-cfg-description]').forEach(el => el.textContent = CFG.shopDescription);
   document.querySelectorAll('[data-cfg-hero-image]').forEach(el => el.src = CFG.heroImage);

@@ -9,7 +9,7 @@ import {
   getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
+  getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const CFG = window.SITE_CONFIG;
@@ -22,11 +22,19 @@ const db   = getFirestore(app);
 let selectedBadge = null;
 let photoSlots = Array(MAX_PHOTOS).fill(null);
 let unsubscribeProducts = null;
+let editingProductId = null;
+let currentProducts = [];
+let adminSearchQuery = '';
+let adminCategoryFilter = 'all';
 
 // ── INJECT STATIC TEXT ──
 function injectStaticContent() {
   document.title = CFG.shopName + " — Admin";
   document.querySelectorAll('[data-cfg-logo]').forEach(el => el.textContent = CFG.shopName);
+  document.querySelectorAll('[data-cfg-logo-image]').forEach(el => {
+    if (CFG.logoImage) { el.src = CFG.logoImage; el.style.display = 'block'; }
+    else { el.style.display = 'none'; }
+  });
   const categorySelect = document.getElementById('prodCategory');
   if (categorySelect) {
     categorySelect.innerHTML = CFG.categories.map(c => `<option value="${c.value}">${c.label}</option>`).join('');
@@ -100,6 +108,14 @@ function buildPhotoSlots() {
       <span class="slot-label">${i === 0 ? 'Principale' : `Photo ${i+1}`}</span>
     `;
     grid.appendChild(slot);
+
+    const existing = photoSlots[i];
+    if (existing && existing.url) {
+      const img = slot.querySelector('img');
+      img.src = existing.url;
+      img.style.display = 'block';
+      slot.classList.add('has-image');
+    }
   }
 }
 
@@ -159,7 +175,46 @@ window.selectBadge = function(btn, value) {
   selectedBadge = value;
 };
 
-// ── AJOUTER PRODUIT ──
+// ── RÉSOUT LES URLS DES PHOTOS (garde les existantes, upload les nouvelles) ──
+async function resolvePhotoUrls() {
+  const results = new Array(MAX_PHOTOS).fill(null);
+  const toUpload = [];
+  photoSlots.forEach((s, i) => {
+    if (!s) return;
+    if (s.url) results[i] = s.url;
+    else if (s.file) toUpload.push({ file: s.file, index: i });
+  });
+
+  if (toUpload.length > 0) {
+    document.getElementById('progressWrap').classList.add('show');
+    document.getElementById('uploadStatus').classList.add('show');
+    document.getElementById('progressBar').style.width = '0%';
+    for (let i = 0; i < toUpload.length; i++) {
+      const url = await uploadFile(toUpload[i].file, i, toUpload.length);
+      results[toUpload[i].index] = url;
+    }
+    document.getElementById('progressWrap').classList.remove('show');
+    document.getElementById('uploadStatus').classList.remove('show');
+  }
+
+  return results.filter(Boolean);
+}
+
+// ── RESET FORMULAIRE (mode ajout) ──
+function resetForm() {
+  ['prodName','prodDesc','prodPrice','prodOldPrice','prodSizes','prodColors'].forEach(id => document.getElementById(id).value = '');
+  photoSlots = Array(MAX_PHOTOS).fill(null);
+  buildPhotoSlots();
+  document.querySelectorAll('.badge-opt').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.badge-opt').classList.add('selected');
+  selectedBadge = null;
+  editingProductId = null;
+  document.getElementById('formTitle').textContent = 'Ajouter un produit';
+  document.getElementById('addBtn').textContent = 'Ajouter le produit';
+  document.getElementById('cancelBtn').style.display = 'none';
+}
+
+// ── AJOUTER / MODIFIER PRODUIT ──
 window.addProduct = async function() {
   if (!auth.currentUser) { alert('Session expirée, reconnectez-vous.'); return; }
 
@@ -172,53 +227,82 @@ window.addProduct = async function() {
   const colorsRaw= document.getElementById('prodColors').value.trim();
   if (!name || !desc || !price) { alert('Veuillez remplir le nom, la description et le prix.'); return; }
 
-  const filesToUpload = photoSlots.map((s, i) => s ? { file: s.file, index: i } : null).filter(Boolean);
-
   const btn = document.getElementById('addBtn');
+  const isEditing = !!editingProductId;
   btn.disabled = true; btn.textContent = 'Enregistrement...';
 
   try {
-    let uploadedUrls = [];
-    if (filesToUpload.length > 0) {
-      document.getElementById('progressWrap').classList.add('show');
-      document.getElementById('uploadStatus').classList.add('show');
-      document.getElementById('progressBar').style.width = '0%';
-      for (let i = 0; i < filesToUpload.length; i++) {
-        const url = await uploadFile(filesToUpload[i].file, i, filesToUpload.length);
-        uploadedUrls.push(url);
-      }
-      document.getElementById('progressWrap').classList.remove('show');
-      document.getElementById('uploadStatus').classList.remove('show');
-    }
-
+    const uploadedUrls = await resolvePhotoUrls();
     const sizes  = sizesRaw  ? sizesRaw.split(',').map(s => s.trim()).filter(Boolean)  : ['Unique'];
     const colors = colorsRaw ? colorsRaw.split(',').map(c => c.trim()).filter(Boolean) : [];
 
-    await addDoc(collection(db, "produits"), {
+    const productData = {
       name, desc, price, oldPrice, category,
       badge: selectedBadge, sizes, colors,
       image:  uploadedUrls[0] || null,
-      images: uploadedUrls.slice(1),
-      createdAt: serverTimestamp(),
-      createdBy: auth.currentUser.email
-    });
+      images: uploadedUrls.slice(1)
+    };
 
-    ['prodName','prodDesc','prodPrice','prodOldPrice','prodSizes','prodColors'].forEach(id => document.getElementById(id).value = '');
-    photoSlots = Array(MAX_PHOTOS).fill(null);
-    buildPhotoSlots();
-    document.querySelectorAll('.badge-opt').forEach(b => b.classList.remove('selected'));
-    document.querySelector('.badge-opt').classList.add('selected');
-    selectedBadge = null;
+    if (isEditing) {
+      await updateDoc(doc(db, "produits", editingProductId), { ...productData, updatedAt: serverTimestamp() });
+    } else {
+      await addDoc(collection(db, "produits"), {
+        ...productData,
+        createdAt: serverTimestamp(),
+        createdBy: auth.currentUser.email
+      });
+    }
+
+    resetForm();
 
     const banner = document.getElementById('successBanner');
+    banner.textContent = isEditing ? '✓ Produit modifié' : '✓ Produit ajouté — visible sur le site instantanément !';
     banner.classList.add('show');
     setTimeout(() => banner.classList.remove('show'), 4000);
 
   } catch(err) {
     alert('Erreur : ' + err.message);
   } finally {
-    btn.disabled = false; btn.textContent = 'Ajouter le produit';
+    btn.disabled = false;
+    btn.textContent = editingProductId ? 'Enregistrer les modifications' : 'Ajouter le produit';
   }
+};
+
+// ── PASSER EN MODE ÉDITION ──
+window.editProduct = function(id) {
+  const p = currentProducts.find(x => x.id === id);
+  if (!p) return;
+
+  document.getElementById('prodName').value = p.name || '';
+  document.getElementById('prodDesc').value = p.desc || '';
+  document.getElementById('prodPrice').value = p.price || '';
+  document.getElementById('prodOldPrice').value = p.oldPrice || '';
+  document.getElementById('prodCategory').value = p.category || '';
+  document.getElementById('prodSizes').value = (p.sizes || []).join(', ');
+  document.getElementById('prodColors').value = (p.colors || []).join(', ');
+
+  selectedBadge = p.badge || null;
+  document.querySelectorAll('.badge-opt').forEach(b => b.classList.remove('selected'));
+  const badgeBtn = [...document.querySelectorAll('.badge-opt')].find(b =>
+    (selectedBadge === null && b.textContent === 'Aucun') || b.textContent === selectedBadge);
+  (badgeBtn || document.querySelector('.badge-opt')).classList.add('selected');
+
+  photoSlots = Array(MAX_PHOTOS).fill(null);
+  const imgs = [p.image, ...(p.images || [])].filter(Boolean);
+  imgs.forEach((url, i) => { if (i < MAX_PHOTOS) photoSlots[i] = { url }; });
+  buildPhotoSlots();
+
+  editingProductId = id;
+  document.getElementById('formTitle').textContent = 'Modifier le produit';
+  document.getElementById('addBtn').textContent = 'Enregistrer les modifications';
+  document.getElementById('cancelBtn').style.display = 'block';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// ── ANNULER L'ÉDITION ──
+window.cancelEdit = function() {
+  resetForm();
 };
 
 // ── SUPPRIMER ──
@@ -235,8 +319,38 @@ function startListener() {
   const q = query(collection(db, "produits"), orderBy("createdAt", "desc"));
   unsubscribeProducts = onSnapshot(q, snap => {
     dot.className = 'status-dot green'; txt.textContent = 'Connecté';
-    renderList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    currentProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    applyAdminFilters();
   }, () => { txt.textContent = 'Erreur'; });
+}
+
+// ── RECHERCHE + FILTRE CATÉGORIE (liste produits admin) ──
+function renderAdminCategoryFilters() {
+  const wrap = document.getElementById('adminCategoryFilters');
+  if (!wrap) return;
+  const cats = [{ value: 'all', label: 'Tous' }, ...CFG.categories];
+  wrap.innerHTML = cats.map(c =>
+    `<button class="filter-btn${adminCategoryFilter === c.value ? ' active' : ''}" data-category="${c.value}">${c.label}</button>`
+  ).join('');
+  wrap.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      adminCategoryFilter = btn.dataset.category;
+      renderAdminCategoryFilters();
+      applyAdminFilters();
+    });
+  });
+}
+
+window.onAdminSearchInput = function(input) {
+  adminSearchQuery = input.value.trim().toLowerCase();
+  applyAdminFilters();
+};
+
+function applyAdminFilters() {
+  let products = currentProducts;
+  if (adminCategoryFilter !== 'all') products = products.filter(p => p.category === adminCategoryFilter);
+  if (adminSearchQuery) products = products.filter(p => p.name.toLowerCase().includes(adminSearchQuery));
+  renderList(products);
 }
 
 function renderList(products) {
@@ -259,13 +373,17 @@ function renderList(products) {
       <div class="product-thumbs-row">${thumbsHTML}</div>
       <div class="product-meta">
         <strong>${p.name}${p.badge?`<span class="product-badge-pill">${p.badge}</span>`:''}</strong>
-        <div class="meta-price">${p.price.toLocaleString(CFG.currencyLocale)} ${CFG.currency}${p.oldPrice?` · <s>${p.oldPrice.toLocaleString(CFG.currencyLocale)} ${CFG.currency}</s>`:''} · ${categoryLabel}</div>
+        <div class="meta-price">${p.price.toLocaleString(CFG.currencyLocale)} ${CFG.currency}${p.oldPrice?` · <s>${p.oldPrice.toLocaleString(CFG.currencyLocale)} ${CFG.currency}</s>`:''} <span class="category-pill">${categoryLabel}</span></div>
         <div class="meta-details">${p.sizes.join(', ')}${p.colors&&p.colors.length?' · '+p.colors.join(', '):''} · ${imgs.length} photo${imgs.length>1?'s':''}</div>
       </div>
-      <button class="delete-btn" onclick="deleteProduct('${p.id}')">Supprimer</button>
+      <div class="product-actions">
+        <button class="edit-btn" onclick="editProduct('${p.id}')">Modifier</button>
+        <button class="delete-btn" onclick="deleteProduct('${p.id}')">Supprimer</button>
+      </div>
     </div>`;
   }).join('');
 }
 
 // ── INIT ──
 injectStaticContent();
+renderAdminCategoryFilters();
