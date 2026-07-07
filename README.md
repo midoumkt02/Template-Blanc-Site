@@ -74,9 +74,21 @@ Ouvrez `config.js` et modifiez uniquement les valeurs (jamais les noms de clés)
 | `categories` | Liste des catégories de produits (valeur + libellé) — alimente le filtre du site et le menu déroulant admin |
 | `analytics` | ID Meta Pixel et/ou Google Analytics du client (laisser vide `""` si absent) |
 
-### 4. Déployer sur Netlify
+### 4. Déployer sur Cloudflare Pages (recommandé — gratuit, bande passante illimitée)
 
-1. Glissez **tout le dossier** (pas juste un fichier) sur [app.netlify.com](https://app.netlify.com)
+1. [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages**
+2. Soit glissez **tout le dossier** du client (**Upload assets**), soit connectez un repo GitHub dédié à ce client
+3. Aucune commande de build à renseigner (site statique) — dossier de sortie : `/`
+4. Le site est en ligne sur `nom-du-projet.pages.dev`
+5. Optionnel : **Custom domains** → connecter le nom de domaine du client (gratuit, SSL inclus)
+
+Pourquoi Cloudflare Pages plutôt que Netlify : bande passante illimitée même
+sur le plan gratuit (Netlify plafonne à 100 Go/mois cumulés sur tout le
+compte), ce qui compte dès que vous gérez plusieurs sites clients sur un
+même compte.
+
+**Alternative — Netlify** (interface glisser-déposer parfois jugée plus simple pour un client non-technique) :
+1. Glissez **tout le dossier** sur [app.netlify.com](https://app.netlify.com)
 2. Ou connectez un nouveau repo GitHub dédié à ce client
 3. Le site est en ligne sur `nom-aleatoire.netlify.app`
 4. Optionnel : connecter un nom de domaine personnalisé du client
