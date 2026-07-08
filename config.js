@@ -9,7 +9,7 @@
 const SITE_CONFIG = {
 
   // ── IDENTITÉ DE LA BOUTIQUE ──
-  shopName: "Hijabi Mode",
+  shopName: "Hijabouki.",
   shopTagline: "La mode sans bruit",
   shopDescription: "Des pièces intemporelles pensées pour durer. Matières nobles, coupes épurées, fabrication responsable.",
   shopFooterText: "Mode minimaliste, fabriquée avec des matières sélectionnées.",
@@ -60,16 +60,28 @@ const SITE_CONFIG = {
   ordersScriptUrl: "https://script.google.com/macros/s/AKfycbz0WTn952EGJd9wceHCmE1ZU1T1j4k8VZ357MGn1RapwDQ50-iQA75g0VftayPk-OlMnQ/exec",
 
   // ── ZONES DE LIVRAISON (modifier selon le pays/région du client) ──
+  // Les 58 wilayas actuelles — doit correspondre aux clés de js/wilayas-communes.js
+  // pour que le menu déroulant des communes fonctionne. Si le client n'est pas en
+  // Algérie, remplacez cette liste : le champ commune se masquera automatiquement.
   deliveryZones: [
-    "Adrar","Chlef","Laghouat","Oum El Bouaghi","Batna","Béjaïa","Biskra","Béchar",
-    "Blida","Bouira","Tamanrasset","Tébessa","Tlemcen","Tiaret","Tizi Ouzou","Alger",
-    "Djelfa","Jijel","Sétif","Saïda","Skikda","Sidi Bel Abbès","Annaba","Guelma",
-    "Constantine","Médéa","Mostaganem","M'Sila","Mascara","Ouargla","Oran","El Bayadh",
-    "Illizi","Bordj Bou Arréridj","Boumerdès","El Tarf","Tindouf","Tissemsilt","El Oued",
-    "Khenchela","Souk Ahras","Tipaza","Mila","Aïn Defla","Naâma","Aïn Témouchent",
-    "Ghardaïa","Relizane"
+    "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi",
+    "Batna", "Béjaïa", "Biskra", "Béchar",
+    "Blida", "Bouira", "Tamanrasset", "Tébessa",
+    "Tlemcen", "Tiaret", "Tizi Ouzou", "Alger",
+    "Djelfa", "Jijel", "Sétif", "Saïda",
+    "Skikda", "Sidi Bel Abbès", "Annaba", "Guelma",
+    "Constantine", "Médéa", "Mostaganem", "M'Sila",
+    "Mascara", "Ouargla", "Oran", "El Bayadh",
+    "Illizi", "Bordj Bou Arréridj", "Boumerdès", "El Tarf",
+    "Tindouf", "Tissemsilt", "El Oued", "Khenchela",
+    "Souk Ahras", "Tipaza", "Mila", "Aïn Defla",
+    "Naâma", "Aïn Témouchent", "Ghardaïa", "Relizane",
+    "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal", "Béni Abbès",
+    "In Salah", "In Guezzam", "Touggourt", "Djanet",
+    "El M'Ghair", "El Meniaa"
   ],
   deliveryZoneLabel: "Wilaya",
+  communeLabel: "Commune",
 
   // ── DEVISE ──
   currency: "DA",
@@ -89,7 +101,32 @@ const SITE_CONFIG = {
     submitPrefix: "Commander — ",
     submitSuffix: " / unité",
     successTitle: "Commande reçue !",
-    successText: "Nous vous contactons dans les 24h pour confirmer et organiser la livraison."
+    successText: "Nous vous contactons dans les 24h pour confirmer et organiser la livraison.",
+    deliveryTypeLabel: "Mode de livraison",
+    deliveryHomeLabel: "À domicile",
+    deliveryOfficeLabel: "Bureau (point relais)",
+    summaryProductLabel: "Prix produit",
+    summaryDeliveryLabel: "Frais de livraison",
+    summaryTotalLabel: "Total à payer"
+  },
+
+  // ── TARIFS DE LIVRAISON (par wilaya + type) ──
+  // "default" s'applique à toutes les wilayas sauf celles listées dans "overrides".
+  // Remplacez ces montants par les tarifs réels négociés avec le transporteur du client.
+  // Si ce champ est absent ou vide, le mode de livraison et le résumé de commande
+  // ne s'affichent pas (comportement rétrocompatible pour les anciens clients).
+  deliveryRates: {
+    default: { domicile: 600, bureau: 400 },
+    overrides: {
+      "Adrar": { domicile: 1200, bureau: 900 },
+      "Tamanrasset": { domicile: 1400, bureau: 1000 },
+      "Illizi": { domicile: 1400, bureau: 1000 },
+      "Tindouf": { domicile: 1400, bureau: 1000 },
+      "In Salah": { domicile: 1400, bureau: 1000 },
+      "In Guezzam": { domicile: 1400, bureau: 1000 },
+      "Djanet": { domicile: 1400, bureau: 1000 },
+      "Bordj Badji Mokhtar": { domicile: 1400, bureau: 1000 }
+    }
   },
 
   // ── FOOTER LIENS (modifiable par client) ──

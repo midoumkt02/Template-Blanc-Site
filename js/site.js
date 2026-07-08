@@ -15,10 +15,18 @@ const db = getFirestore(app);
 let allProducts = [];
 let quantities = {};
 let selectedSizes = {};
+let deliveryTypes = {};
 let activeCategory = 'all';
 
 function formatPrice(p) {
   return p.toLocaleString(CFG.currencyLocale) + ' ' + CFG.currency;
+}
+
+function getDeliveryPrice(wilaya, type) {
+  const rates = CFG.deliveryRates;
+  if (!rates || !wilaya || !type) return null;
+  const rate = (rates.overrides && rates.overrides[wilaya]) || rates.default;
+  return rate ? rate[type] : null;
 }
 
 function getImages(p) {
@@ -37,6 +45,10 @@ function badgeClass(badge) {
 function injectStaticContent() {
   document.title = CFG.shopName + " — Boutique";
   document.querySelectorAll('[data-cfg-logo]').forEach(el => el.textContent = CFG.shopName);
+  document.querySelectorAll('[data-cfg-logo-image]').forEach(el => {
+    if (CFG.logoImage) { el.src = CFG.logoImage; el.style.display = 'block'; }
+    else { el.style.display = 'none'; }
+  });
   if (CFG.logoImage) document.getElementById('faviconLink').href = CFG.logoImage;
   document.querySelectorAll('[data-cfg-tagline]').forEach(el => el.innerHTML = CFG.shopTagline);
   document.querySelectorAll('[data-cfg-description]').forEach(el => el.textContent = CFG.shopDescription);
@@ -184,6 +196,7 @@ window.openDetail = function(id) {
   if (card) card.classList.add('active');
   if (!quantities[id]) quantities[id] = 1;
   if (!selectedSizes[id]) selectedSizes[id] = '';
+  if (!deliveryTypes[id]) deliveryTypes[id] = '';
 
   const imgs = getImages(p);
   const sizeBtns = p.sizes.map(s =>
@@ -246,13 +259,32 @@ window.openDetail = function(id) {
           <div class="form-group full"><label>${F.addressLabel}</label><input type="text" id="address-${id}" placeholder="Rue, numéro, quartier"></div>
           <div class="form-group">
             <label>${CFG.deliveryZoneLabel} *</label>
-            <select id="wilaya-${id}">
+            <select id="wilaya-${id}" onchange="onWilayaChange('${id}')">
               <option value="">-- Sélectionner --</option>
               ${CFG.deliveryZones.map(z => `<option>${z}</option>`).join('')}
             </select>
           </div>
+          <div class="form-group" id="communeWrap-${id}" style="display:none">
+            <label>${CFG.communeLabel || 'Commune'} *</label>
+            <select id="commune-${id}">
+              <option value="">-- Sélectionner --</option>
+            </select>
+          </div>
           <div class="form-group"><label>${F.notesLabel}</label><textarea id="notes-${id}" placeholder="Instructions de livraison…"></textarea></div>
         </div>
+        ${CFG.deliveryRates ? `
+        <div class="form-group" style="margin-bottom:20px">
+          <label>${F.deliveryTypeLabel} *</label>
+          <div class="delivery-options" id="deliveryOptions-${id}">
+            <button type="button" class="delivery-btn${deliveryTypes[id]==='domicile'?' selected':''}" data-type="domicile" onclick="selectDeliveryType('${id}','domicile')">${F.deliveryHomeLabel}</button>
+            <button type="button" class="delivery-btn${deliveryTypes[id]==='bureau'?' selected':''}" data-type="bureau" onclick="selectDeliveryType('${id}','bureau')">${F.deliveryOfficeLabel}</button>
+          </div>
+        </div>
+        <div class="order-summary" id="summary-${id}">
+          <div class="summary-row"><span>${F.summaryProductLabel}</span><span id="summaryProduct-${id}">—</span></div>
+          <div class="summary-row"><span>${F.summaryDeliveryLabel}</span><span id="summaryDelivery-${id}">—</span></div>
+          <div class="summary-row total"><span>${F.summaryTotalLabel}</span><span id="summaryTotal-${id}">—</span></div>
+        </div>` : ''}
         <button class="submit-btn" id="submitBtn-${id}" onclick="submitOrder('${id}')">${F.submitPrefix}${formatPrice(p.price)}${F.submitSuffix}</button>
         <div class="success-msg" id="success-${id}">
           <svg class="success-icon" viewBox="0 0 52 52">
@@ -267,6 +299,7 @@ window.openDetail = function(id) {
   `;
   detail.classList.add('open');
   detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  updateSummary(id);
 };
 
 window.switchImg = function(id, url, thumb) {
@@ -289,7 +322,53 @@ window.changeQty = function(id, delta) {
   quantities[id] = Math.max(1, (quantities[id] || 1) + delta);
   const el = document.getElementById('qty-' + id);
   if (el) el.textContent = quantities[id];
+  updateSummary(id);
 };
+
+function getCommunesFor(wilaya) {
+  return (window.WILAYAS_COMMUNES && window.WILAYAS_COMMUNES[wilaya]) || null;
+}
+
+window.onWilayaChange = function(id) {
+  const wilaya = document.getElementById('wilaya-'+id).value;
+  const wrap = document.getElementById('communeWrap-'+id);
+  const select = document.getElementById('commune-'+id);
+  const communes = getCommunesFor(wilaya);
+  if (communes && communes.length) {
+    select.innerHTML = '<option value="">-- Sélectionner --</option>' + communes.map(c => `<option>${c}</option>`).join('');
+    wrap.style.display = '';
+  } else {
+    select.innerHTML = '<option value="">-- Sélectionner --</option>';
+    wrap.style.display = 'none';
+  }
+  updateSummary(id);
+};
+
+window.selectDeliveryType = function(id, type) {
+  deliveryTypes[id] = type;
+  document.querySelectorAll(`#deliveryOptions-${id} .delivery-btn`).forEach(b =>
+    b.classList.toggle('selected', b.dataset.type === type));
+  updateSummary(id);
+};
+
+function updateSummary(id) {
+  if (!CFG.deliveryRates) return;
+  const p = allProducts.find(x => x.id === id);
+  const productEl = document.getElementById('summaryProduct-' + id);
+  const deliveryEl = document.getElementById('summaryDelivery-' + id);
+  const totalEl = document.getElementById('summaryTotal-' + id);
+  if (!p || !productEl) return;
+
+  const wilaya = document.getElementById('wilaya-' + id)?.value || '';
+  const type = deliveryTypes[id] || '';
+  const qty = quantities[id] || 1;
+  const productTotal = p.price * qty;
+  const deliveryPrice = getDeliveryPrice(wilaya, type);
+
+  productEl.textContent = formatPrice(productTotal);
+  deliveryEl.textContent = deliveryPrice != null ? formatPrice(deliveryPrice) : '—';
+  totalEl.textContent = deliveryPrice != null ? formatPrice(productTotal + deliveryPrice) : '—';
+}
 
 window.submitOrder = async function(id) {
   const p = allProducts.find(x => x.id === id);
@@ -298,9 +377,18 @@ window.submitOrder = async function(id) {
   const phone   = document.getElementById('phone-'+id).value.trim();
   const address = document.getElementById('address-'+id).value.trim();
   const wilaya  = document.getElementById('wilaya-'+id).value;
+  const commune = document.getElementById('commune-'+id)?.value || '';
 
   if (!fname || !phone || !address || !wilaya) {
     alert('Merci de remplir tous les champs obligatoires.');
+    return;
+  }
+  if (getCommunesFor(wilaya) && !commune) {
+    alert('Veuillez choisir une commune.');
+    return;
+  }
+  if (CFG.deliveryRates && !deliveryTypes[id]) {
+    alert('Veuillez choisir un mode de livraison.');
     return;
   }
   if (!selectedSizes[id] && p.sizes.length > 1) {
@@ -312,19 +400,22 @@ window.submitOrder = async function(id) {
   btn.textContent = 'Envoi en cours…';
   btn.disabled = true;
 
+  const deliveryPrice = getDeliveryPrice(wilaya, deliveryTypes[id]);
   const data = {
     produit: p.name, prenom: fname, nom: lname, telephone: phone,
-    adresse: address, wilaya, taille: selectedSizes[id] || p.sizes[0],
+    adresse: address, wilaya, commune, taille: selectedSizes[id] || p.sizes[0],
     couleur: document.getElementById('color-'+id)?.value || '',
     quantite: quantities[id] || 1,
-    notes: document.getElementById('notes-'+id)?.value || ''
+    notes: document.getElementById('notes-'+id)?.value || '',
+    typeLivraison: deliveryTypes[id] || '',
+    fraisLivraison: deliveryPrice || 0
   };
 
   try {
     await fetch(CFG.ordersScriptUrl, { method: 'POST', body: JSON.stringify(data) });
     document.getElementById('success-' + id).classList.add('show');
     btn.textContent = 'Commande envoyée ✓';
-    trackOrderConversion(p.price * data.quantite);
+    trackOrderConversion(p.price * data.quantite + (deliveryPrice || 0));
   } catch(err) {
     btn.textContent = 'Réessayer';
     btn.disabled = false;
