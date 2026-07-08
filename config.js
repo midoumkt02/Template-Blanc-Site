@@ -99,7 +99,6 @@ const SITE_CONFIG = {
     addressLabel: "Adresse de livraison *",
     notesLabel: "Notes (optionnel)",
     submitPrefix: "Commander — ",
-    submitSuffix: " / unité",
     successTitle: "Commande reçue !",
     successText: "Nous vous contactons dans les 24h pour confirmer et organiser la livraison.",
     deliveryTypeLabel: "Mode de livraison",

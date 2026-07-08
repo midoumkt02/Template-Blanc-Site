@@ -5,7 +5,7 @@
 
    Correspond exactement aux champs envoyés par submitOrder() dans js/site.js.
    1ère ligne du Sheet attendue :
-   Date | Produit | Prénom | Nom | Téléphone | Wilaya | Commune | Adresse | Taille | Couleur | Quantité | Type livraison | Frais livraison | Notes
+   Date | Produit | Prénom | Nom | Téléphone | Wilaya | Commune | Adresse | Taille | Couleur | Quantité | Type livraison | Frais livraison | Total | Notes
    ============================================================ */
 
 function doPost(e) {
@@ -15,7 +15,7 @@ function doPost(e) {
     new Date(),
     data.produit, data.prenom, data.nom, data.telephone,
     data.wilaya, data.commune, data.adresse, data.taille, data.couleur,
-    data.quantite, data.typeLivraison, data.fraisLivraison, data.notes
+    data.quantite, data.typeLivraison, data.fraisLivraison, data.total, data.notes
   ]);
   return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))
     .setMimeType(ContentService.MimeType.JSON);

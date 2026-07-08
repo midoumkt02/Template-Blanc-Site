@@ -13,8 +13,7 @@ const app = initializeApp(CFG.firebase);
 const db = getFirestore(app);
 
 let allProducts = [];
-let quantities = {};
-let selectedSizes = {};
+let sizeQuantities = {};
 let deliveryTypes = {};
 let activeCategory = 'all';
 
@@ -194,13 +193,23 @@ window.openDetail = function(id) {
   document.querySelectorAll('.product-card').forEach(c => c.classList.remove('active'));
   const card = document.getElementById('card-' + id);
   if (card) card.classList.add('active');
-  if (!quantities[id]) quantities[id] = 1;
-  if (!selectedSizes[id]) selectedSizes[id] = '';
+  if (!sizeQuantities[id]) {
+    sizeQuantities[id] = {};
+    p.sizes.forEach(s => sizeQuantities[id][s] = 0);
+    if (p.sizes.length === 1) sizeQuantities[id][p.sizes[0]] = 1;
+  }
   if (!deliveryTypes[id]) deliveryTypes[id] = '';
 
   const imgs = getImages(p);
-  const sizeBtns = p.sizes.map(s =>
-    `<button class="size-btn${selectedSizes[id]===s?' selected':''}" onclick="selectSize('${id}','${s}')">${s}</button>`
+  const sizeRows = p.sizes.map(s => `
+    <div class="size-qty-row">
+      <span class="size-qty-label">${s}</span>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="changeSizeQty('${id}','${s}',-1)">−</button>
+        <div class="qty-display" id="qty-${id}-${s}">${sizeQuantities[id][s]}</div>
+        <button class="qty-btn" onclick="changeSizeQty('${id}','${s}',1)">+</button>
+      </div>
+    </div>`
   ).join('');
 
   let galleryHTML = '';
@@ -234,8 +243,8 @@ window.openDetail = function(id) {
       <div class="order-form">
         <h4>${F.title}</h4>
         <div class="form-group" style="margin-bottom:16px">
-          <label>${F.sizeLabel}</label>
-          <div class="size-options" id="sizes-${id}">${sizeBtns}</div>
+          <label>${F.sizeLabel} / ${F.qtyLabel}</label>
+          <div class="size-qty-list" id="sizes-${id}">${sizeRows}</div>
         </div>
         ${p.colors && p.colors.length ? `
         <div class="form-group" style="margin-bottom:16px">
@@ -244,14 +253,6 @@ window.openDetail = function(id) {
             ${p.colors.map(c => `<option>${c}</option>`).join('')}
           </select>
         </div>` : ''}
-        <div class="form-group" style="margin-bottom:20px">
-          <label>${F.qtyLabel}</label>
-          <div class="qty-control">
-            <button class="qty-btn" onclick="changeQty('${id}',-1)">−</button>
-            <div class="qty-display" id="qty-${id}">${quantities[id]}</div>
-            <button class="qty-btn" onclick="changeQty('${id}',1)">+</button>
-          </div>
-        </div>
         <div class="form-grid">
           <div class="form-group"><label>${F.firstNameLabel}</label><input type="text" id="fname-${id}" placeholder="${F.firstNameLabel.replace(' *','')}"></div>
           <div class="form-group"><label>${F.lastNameLabel}</label><input type="text" id="lname-${id}" placeholder="${F.lastNameLabel}"></div>
@@ -285,7 +286,7 @@ window.openDetail = function(id) {
           <div class="summary-row"><span>${F.summaryDeliveryLabel}</span><span id="summaryDelivery-${id}">—</span></div>
           <div class="summary-row total"><span>${F.summaryTotalLabel}</span><span id="summaryTotal-${id}">—</span></div>
         </div>` : ''}
-        <button class="submit-btn" id="submitBtn-${id}" onclick="submitOrder('${id}')">${F.submitPrefix}${formatPrice(p.price)}${F.submitSuffix}</button>
+        <button class="submit-btn" id="submitBtn-${id}" onclick="submitOrder('${id}')">${F.submitPrefix}${formatPrice(p.price)}</button>
         <div class="success-msg" id="success-${id}">
           <svg class="success-icon" viewBox="0 0 52 52">
             <circle class="success-icon-circle" cx="26" cy="26" r="24" fill="none"/>
@@ -312,16 +313,11 @@ window.switchImg = function(id, url, thumb) {
   thumb.classList.add('active');
 };
 
-window.selectSize = function(id, size) {
-  selectedSizes[id] = size;
-  document.querySelectorAll(`#sizes-${id} .size-btn`).forEach(b =>
-    b.classList.toggle('selected', b.textContent === size));
-};
-
-window.changeQty = function(id, delta) {
-  quantities[id] = Math.max(1, (quantities[id] || 1) + delta);
-  const el = document.getElementById('qty-' + id);
-  if (el) el.textContent = quantities[id];
+window.changeSizeQty = function(id, size, delta) {
+  const current = sizeQuantities[id]?.[size] || 0;
+  sizeQuantities[id][size] = Math.max(0, current + delta);
+  const el = document.getElementById(`qty-${id}-${size}`);
+  if (el) el.textContent = sizeQuantities[id][size];
   updateSummary(id);
 };
 
@@ -351,23 +347,30 @@ window.selectDeliveryType = function(id, type) {
   updateSummary(id);
 };
 
+function getTotalQty(id) {
+  return Object.values(sizeQuantities[id] || {}).reduce((sum, q) => sum + q, 0);
+}
+
 function updateSummary(id) {
-  if (!CFG.deliveryRates) return;
   const p = allProducts.find(x => x.id === id);
-  const productEl = document.getElementById('summaryProduct-' + id);
-  const deliveryEl = document.getElementById('summaryDelivery-' + id);
-  const totalEl = document.getElementById('summaryTotal-' + id);
-  if (!p || !productEl) return;
+  if (!p) return;
 
   const wilaya = document.getElementById('wilaya-' + id)?.value || '';
   const type = deliveryTypes[id] || '';
-  const qty = quantities[id] || 1;
+  const qty = getTotalQty(id);
   const productTotal = p.price * qty;
   const deliveryPrice = getDeliveryPrice(wilaya, type);
+  const total = productTotal + (deliveryPrice || 0);
 
-  productEl.textContent = formatPrice(productTotal);
-  deliveryEl.textContent = deliveryPrice != null ? formatPrice(deliveryPrice) : '—';
-  totalEl.textContent = deliveryPrice != null ? formatPrice(productTotal + deliveryPrice) : '—';
+  const productEl = document.getElementById('summaryProduct-' + id);
+  const deliveryEl = document.getElementById('summaryDelivery-' + id);
+  const totalEl = document.getElementById('summaryTotal-' + id);
+  if (productEl) productEl.textContent = formatPrice(productTotal);
+  if (deliveryEl) deliveryEl.textContent = deliveryPrice != null ? formatPrice(deliveryPrice) : '—';
+  if (totalEl) totalEl.textContent = formatPrice(total);
+
+  const btn = document.getElementById('submitBtn-' + id);
+  if (btn) btn.textContent = `${CFG.orderForm.submitPrefix}${formatPrice(total)}`;
 }
 
 window.submitOrder = async function(id) {
@@ -391,8 +394,9 @@ window.submitOrder = async function(id) {
     alert('Veuillez choisir un mode de livraison.');
     return;
   }
-  if (!selectedSizes[id] && p.sizes.length > 1) {
-    alert('Veuillez choisir une taille.');
+  const chosenSizes = Object.entries(sizeQuantities[id] || {}).filter(([, q]) => q > 0);
+  if (chosenSizes.length === 0) {
+    alert('Veuillez choisir au moins une taille et une quantité.');
     return;
   }
 
@@ -400,22 +404,26 @@ window.submitOrder = async function(id) {
   btn.textContent = 'Envoi en cours…';
   btn.disabled = true;
 
+  const totalQty = chosenSizes.reduce((sum, [, q]) => sum + q, 0);
+  const tailleStr = chosenSizes.map(([s, q]) => `${s} ×${q}`).join(', ');
+  const productTotal = p.price * totalQty;
   const deliveryPrice = getDeliveryPrice(wilaya, deliveryTypes[id]);
   const data = {
     produit: p.name, prenom: fname, nom: lname, telephone: phone,
-    adresse: address, wilaya, commune, taille: selectedSizes[id] || p.sizes[0],
+    adresse: address, wilaya, commune, taille: tailleStr,
     couleur: document.getElementById('color-'+id)?.value || '',
-    quantite: quantities[id] || 1,
+    quantite: totalQty,
     notes: document.getElementById('notes-'+id)?.value || '',
     typeLivraison: deliveryTypes[id] || '',
-    fraisLivraison: deliveryPrice || 0
+    fraisLivraison: deliveryPrice || 0,
+    total: productTotal + (deliveryPrice || 0)
   };
 
   try {
     await fetch(CFG.ordersScriptUrl, { method: 'POST', body: JSON.stringify(data) });
     document.getElementById('success-' + id).classList.add('show');
     btn.textContent = 'Commande envoyée ✓';
-    trackOrderConversion(p.price * data.quantite + (deliveryPrice || 0));
+    trackOrderConversion(data.total);
   } catch(err) {
     btn.textContent = 'Réessayer';
     btn.disabled = false;

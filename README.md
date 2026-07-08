@@ -56,7 +56,9 @@ service cloud.firestore {
 
 **Google Sheets + Apps Script** — pour recevoir les commandes :
 1. Créer une nouvelle feuille Google Sheets, avec en 1ère ligne :
-   `Date | Produit | Prénom | Nom | Téléphone | Wilaya | Commune | Adresse | Taille | Couleur | Quantité | Type livraison | Frais livraison | Notes`
+   `Date | Produit | Prénom | Nom | Téléphone | Wilaya | Commune | Adresse | Taille | Couleur | Quantité | Type livraison | Frais livraison | Total | Notes`
+   (la colonne `Taille` peut contenir plusieurs tailles dans une même commande,
+   ex : `M ×1, S ×1` — le client peut commander plusieurs tailles en une fois)
 2. Extensions → Apps Script → coller le contenu de [`google-apps-script/orders.gs`](google-apps-script/orders.gs)
 3. Déployer → Nouvelle application Web → exécuter en tant que **moi**, accès **Tout le monde** → copier l'URL `/exec`
 
@@ -140,8 +142,9 @@ calculé automatiquement à partir de `deliveryRates` dans `config.js`.
   ne s'affichent pas du tout — rétrocompatible avec les sites déjà en
   production qui n'ont pas encore ce champ.
 - **Important pour un client déjà en production** : ajoutez les colonnes
-  `Type livraison` et `Frais livraison` dans son Google Sheet et redéployez
-  son Apps Script avec la version à jour de `google-apps-script/orders.gs`.
+  `Type livraison`, `Frais livraison` et `Total` dans son Google Sheet et
+  redéployez son Apps Script avec la version à jour de
+  `google-apps-script/orders.gs`.
 
 ## Pourquoi un projet Firebase séparé par client ?
 
