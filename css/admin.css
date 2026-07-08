@@ -35,8 +35,7 @@ body { font-family: var(--font-body); background: var(--gray-100); color: var(--
 /* HEADER */
 .admin-screen { display: none; }
 header { background: var(--white); border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; padding: 0 48px; height: 64px; position: sticky; top: 0; z-index: 10; }
-.header-logo { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: 0.15em; }
-.header-logo img { height: 28px; width: auto; object-fit: contain; display: none; }
+.header-logo { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: 0.15em; }
 .header-right { display: flex; align-items: center; gap: 20px; }
 .header-right a { font-size: 13px; color: var(--gray-600); text-decoration: none; }
 .header-email { font-size: 12px; color: var(--gray-400); }

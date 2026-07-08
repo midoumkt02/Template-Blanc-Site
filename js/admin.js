@@ -35,10 +35,6 @@ let adminCategoryFilter = 'all';
 function injectStaticContent() {
   document.title = CFG.shopName + " — Admin";
   document.querySelectorAll('[data-cfg-logo]').forEach(el => el.textContent = CFG.shopName);
-  document.querySelectorAll('[data-cfg-logo-image]').forEach(el => {
-    if (CFG.logoImage) { el.src = CFG.logoImage; el.style.display = 'block'; }
-    else { el.style.display = 'none'; }
-  });
   if (CFG.logoImage) document.getElementById('faviconLink').href = CFG.logoImage;
   const categorySelect = document.getElementById('prodCategory');
   if (categorySelect) {

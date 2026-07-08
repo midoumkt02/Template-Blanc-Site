@@ -17,7 +17,7 @@ const SITE_CONFIG = {
   contactHours: "Lun–Ven, 9h–18h",
   footerNote: "Paiement à la livraison · Livraison partout en Algérie",
 
-  // ── LOGO (laisser vide "" si le client n'en a pas encore — le nom textuel suffit) ──
+  // ── FAVICON (icône affichée dans l'onglet du navigateur — laisser vide "" si absent) ──
   logoImage: "https://res.cloudinary.com/djikeohkg/image/upload/v1783512882/Logo_xio75f.png",
 
   // ── IMAGE HERO (bannière d'accueil) ──
