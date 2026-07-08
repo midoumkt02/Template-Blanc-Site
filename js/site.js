@@ -41,6 +41,7 @@ function injectStaticContent() {
     if (CFG.logoImage) { el.src = CFG.logoImage; el.style.display = 'block'; }
     else { el.style.display = 'none'; }
   });
+  if (CFG.logoImage) document.getElementById('faviconLink').href = CFG.logoImage;
   document.querySelectorAll('[data-cfg-tagline]').forEach(el => el.innerHTML = CFG.shopTagline);
   document.querySelectorAll('[data-cfg-description]').forEach(el => el.textContent = CFG.shopDescription);
   document.querySelectorAll('[data-cfg-hero-image]').forEach(el => el.src = CFG.heroImage);

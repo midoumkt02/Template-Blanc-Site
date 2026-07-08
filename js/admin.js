@@ -39,6 +39,7 @@ function injectStaticContent() {
     if (CFG.logoImage) { el.src = CFG.logoImage; el.style.display = 'block'; }
     else { el.style.display = 'none'; }
   });
+  if (CFG.logoImage) document.getElementById('faviconLink').href = CFG.logoImage;
   const categorySelect = document.getElementById('prodCategory');
   if (categorySelect) {
     categorySelect.innerHTML = CFG.categories.map(c => `<option value="${c.value}">${c.label}</option>`).join('');
