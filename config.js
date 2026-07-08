@@ -57,7 +57,7 @@ const SITE_CONFIG = {
   },
 
   // ── GOOGLE SHEETS — Apps Script URL pour recevoir les commandes ──
-  ordersScriptUrl: "https://script.google.com/macros/s/AKfycbz0WTn952EGJd9wceHCmE1ZU1T1j4k8VZ357MGn1RapwDQ50-iQA75g0VftayPk-OlMnQ/exec",
+  ordersScriptUrl: "https://script.google.com/macros/s/AKfycbyAG0byTCiS170phs87Ofq2ejq-fFr2Uo0nWOc_-rePJpOZUUjfmYAbD_gQRYhQ2SFwWQ/exec",
 
   // ── ZONES DE LIVRAISON (modifier selon le pays/région du client) ──
   // Les 58 wilayas actuelles — doit correspondre aux clés de js/wilayas-communes.js
