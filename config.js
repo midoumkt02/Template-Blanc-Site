@@ -9,11 +9,11 @@
 const SITE_CONFIG = {
 
   // ── IDENTITÉ DE LA BOUTIQUE ──
-  shopName: "Hijabouki.",
+  shopName: "213Moda.",
   shopTagline: "La mode sans bruit",
-  shopDescription: "Des pièces intemporelles pensées pour durer. Matières nobles, coupes épurées, fabrication responsable.",
-  shopFooterText: "Mode minimaliste, fabriquée avec des matières sélectionnées.",
-  contactEmail: "contact@Hijabi-mode.com",
+  shopDescription: "Des pièces intemporelles pensées pour durer. Matières nobles, coupes épurées,Tendances, fabrication responsable.",
+  shopFooterText: "Dernieres collections disponibles !",
+  contactEmail: "contact@213Moda.com",
   contactHours: "Lun–Ven, 9h–18h",
   footerNote: "Paiement à la livraison · Livraison partout en Algérie",
 
